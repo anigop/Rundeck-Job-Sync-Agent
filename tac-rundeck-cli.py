@@ -63,20 +63,47 @@ def readConfig(filename):
 	api_key = json_object['api_key']
 	creds = credentials(api_key,server_name)
 	return creds
-	
-def pullJobs(api_key,project,server_url):
+
+def pull_projects(api_key,server_url):
 	headers = {"X-Rundeck-Auth-Token":api_key}
+	queryString = server_url+"/api/1/projects"
+	response = requests.get(queryString,headers=headers)
+	resp_string = check_response(response)
+
+	if resp_string	== "OK":
+		xml_tree = ET.fromstring(response.text)
+		projectlist = xml_tree.findall('./projects/project')
+
+		if len(projectlist) == 0:
+			print("No projects found on this server")
+
+		else:
+			 projects = []
+			 for project in projectlist:
+			 	projects.append(project.find('name').text)
+			  	
+			 return projects		
+	else:
+		print(resp_string)
+		return None
+	return None	
+
+def pull_job_names(api_key,project,server_url):
+	headers = {"X-Rundeck-Auth-Token":api_key}
+
+
 	queryString = server_url+"/api/2/project/"+project+"/jobs"
 	response = requests.get(queryString,headers=headers)
 	resp_string = check_response(response)
 	
-	if resp_string == "OK":	
+	if resp_string == "OK":
+			
 		xml_tree = ET.fromstring(response.text)
 		
 		joblist = xml_tree.findall('./jobs/job')
 		
 		if len(joblist) == 0:
-			print(" No jobs found for this project")
+			print(" Project : "+project+" No jobs found for this project")
 		else:
 			job_map = {}
 		        #print(response.text)	
@@ -86,8 +113,28 @@ def pullJobs(api_key,project,server_url):
 	else:
 		print(resp_string)	
 		return None
+	return None
 
-def download_job(api_key,job_name,job_id,server_url):
+def pull_job_names_handler(api_key,project,server_url):
+	project_job_map = {}
+
+	if project == "all":
+		projectlist = pull_projects(api_key,server_url)
+
+		if projectlist is None:
+			print(" Pulling jobs failed because no projects were found on this server ")
+		else:
+			for project in projectlist:
+				job_map = pull_job_names(api_key,project,server_url)
+				project_job_map[project] = job_map
+	else:
+		job_map = pull_job_names(api_key,project,server_url)
+		project_job_map[project] = job_map
+	
+	return project_job_map
+
+
+def download_job(api_key,project,job_name,job_id,server_url):
 	headers = {"X-Rundeck-Auth-Token":api_key}
 	query_string = server_url+"/api/1/job/"+job_id
 	
@@ -98,32 +145,34 @@ def download_job(api_key,job_name,job_id,server_url):
 		xml_tree = ET.fromstring(response.text)
 		
 		#print(response.text)
-		job_file_write_handler = open(job_name+".xml","w")
+		job_file_write_handler = open(project.replace(" ","")+"."+job_name+".xml","w")
 		job_file_write_handler.write(response.text)
 	else:
 		print(resp_string)	
 
-def download_jobs(api_key,job_map,server_url):
+def download_jobs(api_key,project,job_map,server_url):
 	for job_n , job_id in job_map.iteritems():
-		download_job(api_key,job_n.replace(" ",""),job_id,server_url)
+		download_job(api_key,project.replace(" ",""),job_n.replace(" ",""),job_id,server_url)
 
-def pull(creds,job_map,job_name):
+def pull(creds,project,job_map,job_name):
 	if not job_map is None:
+		print("Downloading for Project :"+project)
                 for job_n , job_id in job_map.iteritems():
                         print(job_n+"--"+job_id)
 	else:
-                print("Unsuccessful list call..exitting")
-                sys.exit()
-
+                print("Not trying job download for "+project)
+                print("")
+                return
+	print(" ")           
 	if not job_name == "all":
                 newmap = {}
                 if job_name.replace(" ","") in job_map:
                         newmap[job_name] = job_map[job_name]
-                        download_jobs(creds.api_key,newmap,creds.server_name)
+                        download_jobs(creds.api_key,project,newmap,creds.server_name)
                 else:
                         print("No such job in project")
 	else:
-                download_jobs(creds.api_key,job_map,creds.server_name)
+                download_jobs(creds.api_key,project,job_map,creds.server_name)
 
 '''
 Check the response received after the rest API so that error can be raised accordingly
@@ -282,7 +331,8 @@ def main():
 	parser.add_option("--conf-file", action = "store",dest ="conf", default="--", help = "Please provide a configuration file location")
 	parser.add_option("--push", action = "store_true",dest ="mode_push", default=False, help = "Use this flag to push jobs to the server")
 	parser.add_option("--pull", action = "store_true",dest ="mode_pull", default=False, help = "Use this flag to pull jobs from the server")
-	parser.add_option("--project",action ="store", dest="project",default ="--",help = "Enter a valid project name on the rundeck server")	
+	parser.add_option("--project",action ="store", dest="project",default ="--",help = "Enter a valid project name on the rundeck server")
+	parser.add_option("--project-list",action="store_true",dest="proj_list_flag",default=False,help="Use this flag to list all peojects on the server")	
 	parser.add_option("--job", action="store",dest = "job_name",default = "--",help = "Enter a valid jobname on the server")
 	parser.add_option("--job-list",action="store_true",dest= "list_flag",default = False, help = "Set this flag to list all jobnames for the project")
 	parser.add_option("--modify",action="store_true",dest="modify",default=False, help = "Use this flag to edit xml files")
@@ -305,16 +355,28 @@ def main():
 	config_file_name = options.conf
 	creds = readConfig(config_file_name)
 	
+	if options.proj_list_flag is True:
+		pull_projects(creds.api_key,creds.server_name)
+		sys.exit()
+
 	if options.project is "--":
 		print("Please enter a valid project name")
 		sys.exit()
 	project = options.project
     
 	if options.list_flag is True:
-		job_map = pullJobs(creds.api_key,options.project,creds.server_name)
-		if not job_map is None:
-			for job_n , job_id in job_map.iteritems():
-				print(job_n+"                                                           "+job_id)
+		project_job_map = pull_job_names_handler(creds.api_key,options.project,creds.server_name)
+		
+		print(project_job_map)
+		if project_job_map is None:
+			print("Specified Project not found")
+			sys.exit()
+				
+		for project , job_map in project_job_map.iteritems():
+			if not job_map is None:
+				print ("Project : "+project)
+				for job_n , job_id in job_map.iteritems():
+					print("      "+job_n+"                                        "+job_id)
 		sys.exit()
     	
 	if options.job_name is "--":
@@ -337,8 +399,10 @@ def main():
 		mode = "PULL"
 		project = options.project
 
-		job_map = pullJobs(creds.api_key,options.project,creds.server_name)
-		pull(creds,job_map,options.job_name)
+		project_job_map = pull_job_names_handler(creds.api_key,options.project,creds.server_name)
+		
+		for project , job_map in project_job_map.iteritems():
+			pull(creds,project,job_map,options.job_name)
 	
 	elif options.mode_push is True:
 		mode = "PUSH"
