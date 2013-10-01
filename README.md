@@ -11,7 +11,7 @@ Wrapper scripts can be written around this to make automated job promotions acro
 You will need a config file, (Format checked in) with the api token for each server, you can specify a list of destination servers
 on to which the jobs can be modified and pushed to.
 
-This agent uses the request library and would work only for Python 3.0 or later, this can be easily ported to Python 2.x.
+This agent uses the request library and would work only for Python 2.x , this can be easily ported to Python 3.x.
 
 
 List Jobs :
