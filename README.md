@@ -16,7 +16,7 @@ This agent uses the request library and would work only for Python 3.0 or later,
 
 List Jobs :
 
-  python tac-rundeck-cli.py --pull --project appsDOTcom --job-list  --conf-file rundeck-cli.conf
+  python tac-rundeck-cli.py --pull --project <project-name-on-server> --job-list  --conf-file rundeck-cli.conf
 
 Pull jobs
 
