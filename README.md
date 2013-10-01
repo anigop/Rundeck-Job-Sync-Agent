@@ -20,7 +20,7 @@ List Jobs :
 
 Pull jobs
 
-  python tac-rundeck-cli.py --conf-file rundeck-cli.conf --pull --project <Project-name> --job <Job-name> 
+  python tac-rundeck-cli.py --conf-file rundeck-cli.conf --pull --project <Project-name> --job "Job-name" 
 
 Modify Jobs
 
