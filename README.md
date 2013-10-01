@@ -17,15 +17,15 @@ This agent uses the request library and would work only for Python 2.x , this ca
 List Jobs :
 
   python tac-rundeck-cli.py --pull --project <project-name-on-server> --job-list  --conf-file rundeck-cli.conf
-
+  python tac-rundeck-cli.py --conf-file rundeck-cli.conf --pull --project "all" --job "all"
 Pull jobs
 
   python tac-rundeck-cli.py --conf-file rundeck-cli.conf --pull --project <Project-name> --job "Job-name" 
 
 Modify Jobs
 
-  TBU
+ 
 
 Push Jobs
 
-  TBU
+  
