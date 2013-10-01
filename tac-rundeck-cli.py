@@ -17,7 +17,7 @@ Read configuration file
 
 
 class credentials:
-    def __init__(self,api_key,server_name):
+	def __init__(self,api_key,server_name):
 		self.api_key = api_key
 		self.server_name = server_name
 
@@ -315,7 +315,7 @@ def main():
 		if not job_map is None:
 			for job_n , job_id in job_map.iteritems():
 				print(job_n+"                                                           "+job_id)
-    	sys.exit()
+		sys.exit()
     	
 	if options.job_name is "--":
 		print("Please enter a valid job name") 
@@ -339,6 +339,7 @@ def main():
 
 		job_map = pullJobs(creds.api_key,options.project,creds.server_name)
 		pull(creds,job_map,options.job_name)
+	
 	elif options.mode_push is True:
 		mode = "PUSH"
 		print("Running Push mode")
