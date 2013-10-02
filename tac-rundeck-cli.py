@@ -7,7 +7,7 @@
 import requests
 from xml.dom import minidom
 import xml.etree.ElementTree as ET
-import urllib
+
 import json 
 from optparse import OptionParser
 import sys
@@ -106,7 +106,7 @@ def pull_job_names(api_key,project,server_url):
 			print(" Project : "+project+" No jobs found for this project")
 		else:
 			job_map = {}
-		        #print(response.text)	
+		        	
 			for jobs in joblist:
 				job_map[jobs.find('name').text.replace(" ","")] = jobs.get('id')	 	 
 			return job_map
@@ -144,7 +144,7 @@ def download_job(api_key,project,job_name,job_id,server_url):
 	if resp_string == "OK":
 		xml_tree = ET.fromstring(response.text)
 		
-		#print(response.text)
+		
 		job_file_write_handler = open(project.replace(" ","")+"."+job_name+".xml","w")
 		job_file_write_handler.write(response.text)
 	else:
@@ -211,28 +211,25 @@ def process_params(params):
 def modify_files(filename,params,output_file):
 	attribute_map = process_params(params)
 
-#	print(attribute_map)	
+	
 
 	if not attribute_map is None:
 		print("Reading job desc from file - "+filename)
 		try:
 			file_handler  = open(filename,"r")
 			raw_string = file_handler.read()
-                                #print(xml_string)
+                               
 			xml_tree = ET.fromstring(raw_string)
 		except IOError:
                 	print("Error Reading file")
 	
 		for key,value in attribute_map.iteritems():
-			#print("Modifying tag "+key+" with value= "+value)
-			#print("Reading job desc from file - "+filename)
+			
 			
 			try:
 				file_handler  = open(filename,"r")
 				raw_string = file_handler.read()
-				#print(xml_string)
-				
-				#xml_tree = ET.fromstring(raw_string)
+			
 				
 				if not key.find("#") == -1:
 					key_token = key.split("#")
@@ -391,10 +388,7 @@ def main():
 		print("Script cannot run in both push and pull modes")
 		sys.exit()
 
-#	elif options.mode_push is False and options.mode_pull is False:
-#		print(" Please specify a mode (push or pull) ")
-#		sys.exit()
-	
+
 	elif options.mode_pull is True:
 		mode = "PULL"
 		project = options.project
@@ -408,8 +402,7 @@ def main():
 		mode = "PUSH"
 		print("Running Push mode")
 		server_list = read_servers("rundeck-serverinfo.conf")
-		#print("length of server conf")
-		#print(len(server_list))
+	
 		otarget_server_list = [target for target in server_list if target.server_id == options.dest_server]
 		if otarget_server_list is None:
 			print("No server with specified ID was found in server_info file")
@@ -418,7 +411,7 @@ def main():
 				print("Could not find server with that ID, please check the rundeck-serverInfo file and try again")
 			else:
 				otarget_server = otarget_server_list[0]
-				#print("server was found"+otarget_server.server_id+"  "+options.dest_server)
+				
 				if options.target_file == "--":
 					print("Please enter a job definition file that should be pushed")
 				else:
